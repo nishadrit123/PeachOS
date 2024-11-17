@@ -9,6 +9,20 @@ times 33 db 0 ; bios paramter block (33) to fill 33 bytes with 0 after short jum
 
 start:
 	jmp 0x7c0: step2
+	
+; play around with IVT (interrupt vector table) 
+handle_zero:
+	mov ah, 0eh
+	mov al, '0'
+	mov bx, 0x00
+	int 0x10
+	iret 
+handle_one:
+	mov ah, 0eh
+	mov al, '1'
+	mov bx, 0x00
+	int 0x10
+	iret 
 
 step2: 	
 	cli ; clear interrupts
@@ -21,6 +35,18 @@ step2:
 	mov sp, 0x7c00	
 	
 	sti ; enable interrupts
+	
+	; IVT start from 0x00 (int 0)with first 2 bytes for offset and next 2 for segment and so on..
+	mov word[ss: 0x00], handle_zero
+	mov word[ss: 0x02], 0x7c0
+	
+	mov word[ss: 0x04], handle_one
+	mov word[ss: 0x06], 0x7c0
+	
+	; call the interrupt
+	int 0
+	int 1
+	
     mov si, message 
     call print
     jmp $ 
