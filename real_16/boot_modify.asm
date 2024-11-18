@@ -47,9 +47,23 @@ step2:
 	int 0
 	int 1
 	
-    mov si, message 
-    call print
-    jmp $ 
+	; Read from Hard Disk 
+	mov ah, 2 ; read sector command
+	mov al, 1 ; read 1 sector
+	mov ch, 0 ; cylinder low 8 bits
+	mov cl, 2 ; read sector 2
+	mov dh, 0 ; head number
+	mov bx, buffer
+	int 0x13 ; interrupt to read from a hard disk sector
+	jc error ; jmp in case of any error
+	mov si, buffer
+	call print
+	jmp $
+	
+error:
+	mov si, error_message
+	call print
+	jmp $
 
 print:
     mov bx, 0
@@ -67,9 +81,12 @@ print_char:
     int 0x10 
     ret
 
-message: db 'Hello World from "Nishad Kanago"', 0 
+error_message: db 'Error reading from hard disk', 0 
 
 times 510-($ - $$) db 0 
 dw 0xAA55
 
+buffer:
+
 ; here all the segment registers (ds, ex, ss) are initialised to ensure proper memory management making the code more robust and sp provides bootloader with a known stack area
+; bless ./boot_modify.bin to see the message from txt file written to the disk sector 2
